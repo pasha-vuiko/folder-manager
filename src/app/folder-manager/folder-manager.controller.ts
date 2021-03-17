@@ -1,5 +1,4 @@
 import {FolderManagerService} from './folder-manager.service';
-import {FolderInterface} from './types/folder.interface';
 import {injectable} from 'tsyringe';
 import {CommandsEnum} from './types/commands.enum';
 import {LoggerService} from '../../shared/services/logger.service';
@@ -14,10 +13,6 @@ export class FolderManagerController {
         this.folderManagerService.createFolder(folderPath);
 
         return folderPath;
-    }
-
-    public getFolders(): FolderInterface[] {
-        return this.folderManagerService.folders;
     }
 
     public moveFolder(folderPath: string, folderDestinationName: string): void {

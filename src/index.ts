@@ -8,8 +8,8 @@ import {container} from 'tsyringe';
 const controller = container.resolve(FolderManagerController);
 const parser = container.resolve(ParseInputService);
 
-const commands = parser.parseInput(path.resolve(__dirname, 'assets', 'input.txt'));
+const commands = parser.parseInput(path.resolve(__dirname, 'assets', 'input.txt')); // Parse commands from input file
 
 commands.forEach(c => {
-    controller.executeCommand(c);
+    controller.executeCommand(c); // Executing commands from file
 });

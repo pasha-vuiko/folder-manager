@@ -1,5 +1,4 @@
 import {ErrorEnum} from '../types/error.enum';
-import {FolderInterface} from '../../app/folder-manager/types/folder.interface';
 import {singleton} from 'tsyringe';
 import {CommandsEnum} from '../../app/folder-manager/types/commands.enum';
 import chalk from 'chalk';
@@ -29,13 +28,13 @@ export class LoggerService {
         }
     }
 
-    public logError(error: ErrorEnum, commandParamsStr?: string): void {
+    public logError(error: ErrorEnum, commandParamsStr?: string, errorPath = ''): void {
         switch (error) {
             case ErrorEnum.DELETE_NOT_EXIST:
-                console.log(chalk.red(`Cannot delete ${commandParamsStr} - ${commandParamsStr} does not exist`));
+                console.log(chalk.red(`Cannot delete ${commandParamsStr} - ${errorPath} does not exist`));
                 break;
             case ErrorEnum.MOVE_NOT_EXIST:
-                console.log(chalk.red(`Cannot move ${commandParamsStr} - ${commandParamsStr} does not exist`));
+                console.log(chalk.red(`Cannot move ${commandParamsStr} - ${errorPath} does not exist`));
                 break;
             case ErrorEnum.FOLDER_NOT_EXIST:
                 console.log(chalk.red(`Error folder ${commandParamsStr} does not exist`));

@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "node dist/index.js",
+    "start-ts": "ts-node src/index.ts",
     "dev": "nodemon src/index.ts",
-    "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc"
   },
   "author": "Pavlo Vuiko <pasha.vuiko@gmail.com>",
   "license": "ISC",

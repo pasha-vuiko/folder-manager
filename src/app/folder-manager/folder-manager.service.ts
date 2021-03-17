@@ -8,8 +8,7 @@ export class FolderManagerService {
     // tslint:disable-next-line:variable-name
     private _folders: FolderInterface[] = [];
 
-    constructor(private loggerService: LoggerService) {
-    }
+    constructor(private loggerService: LoggerService) {}
 
     public createFolder(folderPath: string): void {
         const folders = folderPath.split('/');
@@ -17,7 +16,7 @@ export class FolderManagerService {
         const folder: FolderInterface = {} as FolderInterface;
 
         if (folders.length >= 1) {
-            if (!this.folderExists(folderPath, true)) {
+            if (!this.folderExists(folderPath, true)) { // check of existing of folder
                 this.loggerService.logError(ErrorEnum.FOLDER_NOT_EXIST, folderPath);
                 return;
             }
@@ -61,7 +60,6 @@ export class FolderManagerService {
         const folders = folderPath.split('/');
 
         if (!this.folderExists(folderPath, false, true)) {
-            this.loggerService.logError(ErrorEnum.DELETE_NOT_EXIST, folderPath);
             return;
         }
 
@@ -89,7 +87,7 @@ export class FolderManagerService {
 
         const folders = folderPath.split('/');
 
-        folders.forEach((folderName, i) => {
+        folders.every((folderName, i) => {
             if (exceptLast) {
                 if (i === folders.length - 1) {
                     return;
@@ -100,6 +98,10 @@ export class FolderManagerService {
                 exists = this.folderExistsInParent(folderName);
 
                 if (!exists) {
+                    if (onDelete) {
+                        this.loggerService.logError(ErrorEnum.DELETE_NOT_EXIST, folderPath, folderName);
+                    }
+
                     return;
                 }
             }
@@ -116,7 +118,7 @@ export class FolderManagerService {
         return exists;
     }
 
-    public printFolderList(folders = [] as FolderInterface[], indent = 0): void {
+    public printFolderList(): void {
         const topFolders = this._folders.filter(f => f.parentName === '');
 
         this.recursivePrint(topFolders);
@@ -124,7 +126,7 @@ export class FolderManagerService {
 
     private recursivePrint(folders: FolderInterface[], indent = 0): void {
         folders.forEach(folder => {
-            this.loggerService.logFolder(folder.name, indent, '-');
+            this.loggerService.logFolder(folder.name, indent, ' ');
 
             const childFolders = this.getFoldersByParent(folder.name);
 
@@ -137,7 +139,7 @@ export class FolderManagerService {
     private folderExistsInParent(folderName: string, parentFolderName = ''): boolean {
         const folders = this.getFoldersByParent(parentFolderName);
 
-        return !!folders.length;
+        return !!folders.find(f => f.name === folderName);
     }
 
     private getFoldersByParent(parentFolderName = ''): FolderInterface[] {
