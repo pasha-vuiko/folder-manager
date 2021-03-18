@@ -4,6 +4,10 @@ The project is created using node.js and typescript
 
 input file located in src/assets/input.txt
 
+## Install dependencies 
+
+Run `npm install` to install project dependencies
+
 ## Start TS mode
 
 Run `npm run start-ts` to run TypeScript version of app
