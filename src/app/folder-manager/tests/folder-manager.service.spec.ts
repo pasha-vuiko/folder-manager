@@ -16,9 +16,11 @@ describe('FolderManagerService', () => {
     it('should create folder', () => {
         folderManagerService.createFolder('fruits');
 
-        const folders: FolderInterface[] = folderManagerService.folders.sort();
+        const folders: FolderInterface[] = folderManagerService.folders;
 
-        expect(folders).toEqual([{ name: 'fruits', parentName: '' }].sort() as FolderInterface[]);
+        const expected = [{ name: 'fruits', parentName: '' }] as FolderInterface[];
+
+        expect(new Set(folders)).toEqual(new Set(expected));
     });
 
     it('should create folder with parent', () => {
