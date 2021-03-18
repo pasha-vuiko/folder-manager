@@ -1,8 +1,8 @@
-import 'reflect-metadata'
+import 'reflect-metadata';
 
 import {FolderManagerService} from '../folder-manager.service';
 import {LoggerService} from '../../../shared/services/logger.service';
-import {FolderInterface} from "../types/folder.interface";
+import {FolderInterface} from '../types/folder.interface';
 
 jest.mock('../../../shared/services/logger.service');
 
@@ -11,14 +11,14 @@ describe('FolderManagerService', () => {
 
     beforeEach(() => {
         folderManagerService = new FolderManagerService(new LoggerService());
-    })
+    });
 
     it('should create folder', () => {
         folderManagerService.createFolder('fruits');
 
         const folders: FolderInterface[] = folderManagerService.folders.sort();
 
-        expect(folders).toEqual([{ name: 'fruits', parentName: '' }].sort() as FolderInterface[])
+        expect(folders).toEqual([{ name: 'fruits', parentName: '' }].sort() as FolderInterface[]);
     });
 
     it('should create folder with parent', () => {
