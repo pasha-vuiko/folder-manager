@@ -181,14 +181,20 @@ export class FolderManagerService {
   }
 
   public printFolderList(): void {
-    this.recursivePrint(this._folders);
+    const sortedFolders = this._folders.sort((f1, f2) =>
+      new Intl.Collator().compare(f1.name, f2.name)
+    );
+
+    this.recursivePrint(sortedFolders);
   }
 
   private recursivePrint(folders: FolderTreeInterface[], indent = 0): void {
     folders.forEach((folder) => {
       this.loggerService.logFolder(folder.name, indent, ' ');
 
-      const childFolders = folder.children;
+      const childFolders = folder.children.sort((f1, f2) =>
+        new Intl.Collator().compare(f1.name, f2.name)
+      );
 
       if (childFolders.length) {
         this.recursivePrint(childFolders, indent + 1);
