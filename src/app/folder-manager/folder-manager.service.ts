@@ -1,148 +1,198 @@
-import {FolderInterface} from './types/folder.interface';
-import {LoggerService} from '../../shared/services/logger.service';
-import {ErrorEnum} from '../../shared/types/error.enum';
-import {singleton} from 'tsyringe';
+import { LoggerService } from '../../shared/services/logger.service';
+import { singleton } from 'tsyringe';
+import { FolderTreeInterface } from './types/folder-tree.interface';
+import { ErrorEnum } from '../../shared/types/error.enum';
 
 @singleton()
 export class FolderManagerService {
-    // tslint:disable-next-line:variable-name
-    private _folders: FolderInterface[] = [];
+  // tslint:disable-next-line:variable-name
+  private _folders: FolderTreeInterface[] = [];
 
-    constructor(private loggerService: LoggerService) {}
+  constructor(private loggerService: LoggerService) {}
 
-    public createFolder(folderPath: string): void {
-        const folders = folderPath.split('/');
+  public createFolder(folderPath: string): void {
+    const folderNames = folderPath.split('/');
 
-        const folder: FolderInterface = {} as FolderInterface;
+    if (folderNames.length > 1) {
+      if (!this.findFolderParent(folderPath)) {
+        // check of existing of folder
+        this.loggerService.logError(ErrorEnum.FOLDER_NOT_EXIST, folderPath);
+        return;
+      }
 
-        if (folders.length >= 1) {
-            if (!this.folderExists(folderPath, true)) { // check of existing of folder
-                this.loggerService.logError(ErrorEnum.FOLDER_NOT_EXIST, folderPath);
-                return;
-            }
-
-            folder.name = folders[folders.length - 1];
-            folder.parentName = folders[folders.length - 2];
-        }
-
-        folder.parentName = folder.parentName || '';
-
-        this._folders.push(folder);
+      this.createSubFolder(this._folders, folderNames);
+      return;
     }
 
-    public moveFolder(folderPath: string, destinationFolderName: string): void {
-        const folders = folderPath.split('/');
+    const newFolder: FolderTreeInterface = {
+      name: folderNames[0],
+      children: [],
+    };
 
-        if (folders.length > 1) {
-            if (!this.folderExists(folderPath, true)) {
-                this.loggerService.logError(ErrorEnum.FOLDER_NOT_EXIST, folderPath);
-                return;
-            }
-        }
+    this._folders.push(newFolder);
+  }
 
-        const foundFolderIndex: number = this._folders.findIndex(f => {
-            if (folders.length > 1) {
-                return f.name === folders[folders.length - 1] && f.parentName === folders[folders.length - 2];
-            } else {
-                return f.name === folders[folders.length - 1];
-            }
-        });
-
-        if (foundFolderIndex === -1) {
-            this.loggerService.logError(ErrorEnum.MOVE_NOT_EXIST, destinationFolderName);
-            return;
-        }
-
-        this._folders[foundFolderIndex].parentName = destinationFolderName;
+  private createSubFolder(folders: FolderTreeInterface[], folderNames: string[]): void {
+    if (!folderNames.length) {
+      this.loggerService.logError(ErrorEnum.FOLDER_NOT_EXIST);
+      return;
     }
 
-    public deleteFolder(folderPath: string): void {
-        const folders = folderPath.split('/');
+    const [folderParent, ...folderChildren] = folderNames;
 
-        if (!this.folderExists(folderPath, false, true)) {
-            return;
-        }
+    const foundIndex = folders.findIndex((f) => f.name === folderParent);
 
-        const folderIndex = this._folders.findIndex(f => {
-            if (folders.length > 1) {
-                return f.name === folders[folders.length - 1] && f.parentName === folders[folders.length - 2];
-            } else {
-                return f.name === folders[folders.length - 1];
-            }
-        });
-
-        if (!folderIndex) {
-            this.loggerService.logError(ErrorEnum.DELETE_NOT_EXIST, folderPath);
-        }
-
-        this._folders.splice(folderIndex, 1);
+    if (foundIndex === -1) {
+      this.loggerService.logError(ErrorEnum.FOLDER_NOT_EXIST, folderParent);
+      return;
     }
 
-    get folders(): FolderInterface[] {
-        return this._folders;
+    if (folderNames.length === 2) {
+      const newFolder: FolderTreeInterface = {
+        name: folderNames[1],
+        children: [],
+      };
+
+      folders[foundIndex].children.push(newFolder);
+      return;
     }
 
-    private folderExists(folderPath: string, exceptLast = false, onDelete = false): boolean {
-        let exists = true;
+    this.createSubFolder(folders[foundIndex].children, folderChildren);
+  }
 
-        const folders = folderPath.split('/');
+  public findFolder(folderPath: string): FolderTreeInterface | null {
+    const folderNames = folderPath.split('/');
 
-        folders.every((folderName, i) => {
-            if (exceptLast) {
-                if (i === folders.length - 1) {
-                    return;
-                }
-            }
+    return this.findFolderRecursive(this._folders, folderNames);
+  }
 
-            if (i === 0) {
-                exists = this.folderExistsInParent(folderName);
+  public findFolderParent(folderPath: string): FolderTreeInterface | null {
+    const folderNames = folderPath.split('/');
 
-                if (!exists) {
-                    if (onDelete) {
-                        this.loggerService.logError(ErrorEnum.DELETE_NOT_EXIST, folderPath, folderName);
-                    }
+    folderNames.pop();
 
-                    return;
-                }
-            }
+    return this.findFolderRecursive(this._folders, folderNames);
+  }
 
-            if (i >= 1) {
-                exists = this.folderExistsInParent(folderName, folders[i - 1]);
-
-                if (!exists) {
-                    return;
-                }
-            }
-        });
-
-        return exists;
+  private findFolderRecursive(
+    folders: FolderTreeInterface[],
+    folderNames: string[]
+  ): FolderTreeInterface | null {
+    if (!folderNames.length) {
+      this.loggerService.logError(ErrorEnum.FOLDER_NOT_EXIST);
+      return null;
     }
 
-    public printFolderList(): void {
-        const topFolders = this._folders.filter(f => f.parentName === '');
+    const [folderParent, ...folderChildren] = folderNames;
 
-        this.recursivePrint(topFolders);
+    const foundIndex = folders.findIndex((f) => f.name === folderParent);
+
+    const foundFolder = folders[foundIndex];
+
+    if (!folderChildren.length) {
+      return foundFolder || null;
     }
 
-    private recursivePrint(folders: FolderInterface[], indent = 0): void {
-        folders.forEach(folder => {
-            this.loggerService.logFolder(folder.name, indent, ' ');
-
-            const childFolders = this.getFoldersByParent(folder.name);
-
-            if (childFolders.length) {
-                this.recursivePrint(childFolders, indent + 1);
-            }
-        });
+    if (!foundFolder) {
+      this.loggerService.logError(ErrorEnum.FOLDER_NOT_EXIST, folderParent);
+      return null;
     }
 
-    private folderExistsInParent(folderName: string, parentFolderName = ''): boolean {
-        const folders = this.getFoldersByParent(parentFolderName);
-
-        return !!folders.find(f => f.name === folderName);
+    if (foundFolder.children.length) {
+      return this.findFolderRecursive(foundFolder.children, folderChildren);
     }
 
-    private getFoldersByParent(parentFolderName = ''): FolderInterface[] {
-        return this._folders.filter(f => f.parentName === parentFolderName);
+    return foundFolder || null;
+  }
+
+  public moveFolder(folderPath: string, destinationFolderName: string): void {
+    const folderNames = folderPath.split('/');
+
+    this.moveFolderRecursive(this._folders, folderNames, destinationFolderName);
+  }
+
+  private moveFolderRecursive(
+    folders: FolderTreeInterface[],
+    folderNames: string[],
+    destinationFolderName: string
+  ): void {
+    if (!folderNames.length) {
+      this.loggerService.logError(ErrorEnum.FOLDER_NOT_EXIST);
+      return;
     }
+
+    const [folderParent, ...folderChildren] = folderNames;
+
+    const foundIndex = folders.findIndex((f) => f.name === folderParent);
+
+    if (foundIndex === -1) {
+      this.loggerService.logError(ErrorEnum.DELETE_NOT_EXIST, folderParent);
+      return;
+    }
+
+    if (folderNames.length === 1) {
+      const foundDestinationFolder = this.findFolder(destinationFolderName);
+
+      if (foundDestinationFolder) {
+        foundDestinationFolder.children.push(folders[foundIndex]);
+        folders.splice(foundIndex, 1);
+      }
+      return;
+    }
+
+    this.moveFolderRecursive(folders[foundIndex].children, folderChildren, destinationFolderName);
+  }
+
+  public deleteFolder(folderPath: string): void {
+    const folderNames = folderPath.split('/');
+
+    this.deleteFolderRecursive(this._folders, folderNames, folderPath);
+  }
+
+  private deleteFolderRecursive(
+    folders: FolderTreeInterface[],
+    folderNames: string[],
+    folderPath: string
+  ): void {
+    if (!folderNames.length) {
+      this.loggerService.logError(ErrorEnum.FOLDER_NOT_EXIST);
+      return;
+    }
+
+    const [folderParent, ...folderChildren] = folderNames;
+
+    const foundIndex = folders.findIndex((f) => f.name === folderParent);
+
+    if (foundIndex === -1) {
+      this.loggerService.logError(ErrorEnum.DELETE_NOT_EXIST, folderPath, folderParent);
+      return;
+    }
+
+    if (folderNames.length === 1) {
+      folders.splice(foundIndex, 1);
+      return;
+    }
+
+    this.deleteFolderRecursive(folders[foundIndex].children, folderChildren, folderPath);
+  }
+
+  get folders(): FolderTreeInterface[] {
+    return this._folders;
+  }
+
+  public printFolderList(): void {
+    this.recursivePrint(this._folders);
+  }
+
+  private recursivePrint(folders: FolderTreeInterface[], indent = 0): void {
+    folders.forEach((folder) => {
+      this.loggerService.logFolder(folder.name, indent, ' ');
+
+      const childFolders = folder.children;
+
+      if (childFolders.length) {
+        this.recursivePrint(childFolders, indent + 1);
+      }
+    });
+  }
 }

@@ -1,15 +1,17 @@
 import 'reflect-metadata';
 
-import {FolderManagerController} from './app/folder-manager/folder-manager.controller';
-import {ParseInputService} from './shared/services/parseInput.service';
+import { FolderManagerController } from './app/folder-manager/folder-manager.controller';
+import { ParseInputService } from './shared/services/parseInput.service';
 import path from 'path';
-import {container} from 'tsyringe';
+import { container } from 'tsyringe';
 
 const controller = container.resolve(FolderManagerController);
 const parser = container.resolve(ParseInputService);
 
-const commands = parser.parseInput(path.resolve(__dirname, 'assets', 'input.txt')); // Parse commands from input file
+const commands = parser.parseInput(
+  path.resolve(__dirname, 'assets', 'input.txt')
+); // Parse commands from input file
 
-commands.forEach(c => {
-    controller.executeCommand(c); // Executing commands from file
+commands.forEach((c) => {
+  controller.executeCommand(c); // Executing commands from file
 });

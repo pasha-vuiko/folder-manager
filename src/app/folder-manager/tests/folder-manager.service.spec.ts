@@ -1,99 +1,124 @@
 import 'reflect-metadata';
 
-import {FolderManagerService} from '../folder-manager.service';
-import {LoggerService} from '../../../shared/services/logger.service';
-import {FolderInterface} from '../types/folder.interface';
+import { FolderManagerService } from '../folder-manager.service';
+import { LoggerService } from '../../../shared/services/logger.service';
+import { FolderTreeInterface } from '../types/folder-tree.interface';
 
 jest.mock('../../../shared/services/logger.service');
 
 describe('FolderManagerService', () => {
-    let folderManagerService: FolderManagerService;
+  let folderManagerService: FolderManagerService;
 
-    beforeEach(() => {
-        folderManagerService = new FolderManagerService(new LoggerService());
-    });
+  beforeEach(() => {
+    folderManagerService = new FolderManagerService(new LoggerService());
+  });
 
-    it('should create folder', () => {
-        folderManagerService.createFolder('fruits');
+  it('should find folder', () => {
+    (folderManagerService as any)._folders = [
+      {
+        name: 'fruits',
+        children: [
+          {
+            name: 'apples',
+            children: [],
+          },
+          {
+            name: 'oranges',
+            children: [
+              {
+                name: 'skin',
+                children: [],
+              },
+            ],
+          },
+        ],
+      },
+    ];
 
-        const folders: FolderInterface[] = folderManagerService.folders;
+    const foundFolder = folderManagerService.findFolder('fruits/oranges/skin');
 
-        const expected = [{ name: 'fruits', parentName: '' }] as FolderInterface[];
+    const expected = [{ name: 'skin', children: [] }] as FolderTreeInterface[];
 
-        expect(new Set(folders)).toEqual(new Set(expected));
-    });
+    expect(new Set([foundFolder])).toEqual(new Set(expected));
+  });
 
-    it('should create folder with parent', () => {
-        folderManagerService.createFolder('fruits');
-        folderManagerService.createFolder('fruits/apples');
+  it('should create folder', () => {
+    folderManagerService.createFolder('fruits');
 
-        const folders: FolderInterface[] = folderManagerService.folders;
+    const folders: FolderTreeInterface[] = folderManagerService.folders;
 
-        const expected: FolderInterface[] = [
-            { name: 'apples', parentName: 'fruits' },
-            { name: 'fruits', parentName: '' }
-        ];
+    const expected = [
+      { name: 'fruits', children: [] },
+    ] as FolderTreeInterface[];
 
-        expect(new Set(folders)).toEqual(new Set(expected));
-    });
+    expect(new Set(folders)).toEqual(new Set(expected));
+  });
 
-    it('should move folder', () => {
-        folderManagerService.createFolder('fruits');
-        folderManagerService.createFolder('foods');
-        folderManagerService.createFolder('fruits/apples');
-        folderManagerService.moveFolder('fruits/apples', 'foods');
+  it('should create nested folder', () => {
+    folderManagerService.createFolder('fruits');
+    folderManagerService.createFolder('fruits/apples');
 
-        const folders: FolderInterface[] = folderManagerService.folders;
+    const folders: FolderTreeInterface[] = folderManagerService.folders;
 
-        const expected: FolderInterface[] = [
-            { name: 'apples', parentName: 'foods' },
-            { name: 'fruits', parentName: '' },
-            { name: 'foods', parentName: '' }
-        ];
+    const expected: FolderTreeInterface[] = [
+      {
+        name: 'fruits',
+        children: [
+          {
+            name: 'apples',
+            children: [],
+          },
+        ],
+      },
+    ];
 
-        expect(new Set(folders)).toEqual(new Set(expected));
-    });
+    expect(new Set(folders)).toEqual(new Set(expected));
+  });
 
-    it('should delete folder', () => {
-        folderManagerService.createFolder('fruits');
-        folderManagerService.createFolder('foods');
-        folderManagerService.createFolder('fruits/apples');
-        folderManagerService.deleteFolder('fruits/apples');
+  it('should move folder', () => {
+    folderManagerService.createFolder('fruits');
+    folderManagerService.createFolder('foods');
+    folderManagerService.createFolder('fruits/apples');
+    folderManagerService.moveFolder('fruits/apples', 'foods');
 
-        const folders: FolderInterface[] = folderManagerService.folders;
+    const folders: FolderTreeInterface[] = folderManagerService.folders;
 
-        const expected: FolderInterface[] = [
-            { name: 'fruits', parentName: '' },
-            { name: 'foods', parentName: '' }
-        ];
+    const expected: FolderTreeInterface[] = [
+      {
+        name: 'fruits',
+        children: [],
+      },
+      {
+        name: 'foods',
+        children: [
+          {
+            name: 'apples',
+            children: [],
+          },
+        ],
+      },
+    ];
 
-        expect(new Set(folders)).toEqual(new Set(expected));
-    });
+    expect(new Set(folders)).toEqual(new Set(expected));
+  });
 
-    it('folder should exist', () => {
-        folderManagerService.createFolder('fruits');
-        folderManagerService.createFolder('fruits/apples');
+  it('should delete folder', () => {
+    folderManagerService.createFolder('fruits');
+    folderManagerService.createFolder('foods');
+    folderManagerService.createFolder('fruits/apples');
+    folderManagerService.createFolder('fruits/apples/lal');
+    folderManagerService.deleteFolder('fruits/apples/lal');
 
-        const exists = (folderManagerService as any).folderExists('fruits/apples', false);
+    const folders: FolderTreeInterface[] = folderManagerService.folders;
 
-        expect(exists).toBe(true);
-    });
+    const expected: FolderTreeInterface[] = [
+      {
+        name: 'fruits',
+        children: [{ name: 'apples', children: [] }],
+      },
+      { name: 'foods', children: [] },
+    ];
 
-    it('top folder should not exist', () => {
-        folderManagerService.createFolder('fruits');
-        folderManagerService.createFolder('fruits/apples');
-
-        const exists = (folderManagerService as any).folderExists('apples', false);
-
-        expect(exists).toBe(false);
-    });
-
-    it('folder should exist in parent', () => {
-        folderManagerService.createFolder('fruits');
-        folderManagerService.createFolder('fruits/apples');
-
-        const exists = (folderManagerService as any).folderExistsInParent('apples', 'fruits');
-
-        expect(exists).toBe(true);
-    });
+    expect(new Set(folders)).toEqual(new Set(expected));
+  });
 });
