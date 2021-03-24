@@ -8,23 +8,23 @@ export class LoggerService {
   public logCommand(commandName: CommandsEnum, commandParamsStr: string): void {
     switch (commandName) {
       case CommandsEnum.CREATE:
-        console.log(chalk.green(commandName), commandParamsStr);
+        console.log(chalk.green(commandName), chalk.white(commandParamsStr));
         break;
 
       case CommandsEnum.MOVE:
-        console.log(chalk.blue(commandName), commandParamsStr);
+        console.log(chalk.blue(commandName), chalk.white(commandParamsStr));
         break;
 
       case CommandsEnum.DELETE:
-        console.log(chalk.red(commandName), commandParamsStr);
+        console.log(chalk.red(commandName), chalk.white(commandParamsStr));
         break;
 
       case CommandsEnum.LIST:
-        console.log(chalk.yellow(commandName), commandParamsStr);
+        console.log(chalk.yellow(commandName), chalk.white(commandParamsStr));
         break;
 
       default:
-        console.log(chalk.cyan(commandName), commandParamsStr);
+        console.log(chalk.cyan(commandName), chalk.white(commandParamsStr));
     }
   }
 
@@ -63,6 +63,6 @@ export class LoggerService {
     indentCount: number,
     indentChar: string
   ): void {
-    console.log(indentChar.repeat(indentCount) + folderName);
+    console.log(indentChar.repeat(indentCount) + chalk.white(folderName));
   }
 }
