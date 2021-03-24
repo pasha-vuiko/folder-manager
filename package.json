@@ -7,14 +7,16 @@
     "start": "node dist/index.js",
     "start-ts": "ts-node src/index.ts",
     "dev": "nodemon src/index.ts",
-    "build": "tsc",
-    "test": "jest"
+    "build": "tsc -p tsconfig.json && npm run copy:assets",
+    "test": "jest",
+    "copy:assets": "cpx 'src/assets/**' 'dist/assets'"
   },
   "author": "Pavlo Vuiko <pasha.vuiko@gmail.com>",
   "license": "ISC",
   "devDependencies": {
     "@types/jest": "^26.0.21",
     "@types/node": "^14.14.35",
+    "cpx": "^1.5.0",
     "jest": "^26.6.3",
     "node-ts": "^5.1.1",
     "nodemon": "^2.0.7",
